@@ -223,6 +223,11 @@ td.actions-cell > * { margin: 2px; }
 .senha-wrap { position: relative; }
 .senha-wrap input { padding-right: 5rem; }
 .senha-toggle { position: absolute; right: .75rem; top: 50%; transform: translateY(-50%); font-size: .85rem; }
+.hidden { display: none; }
+.google-area { display: flex; flex-direction: column; gap: 1rem; }
+.google-btn { display: flex; justify-content: center; min-height: 44px; }
+.divider { display: flex; align-items: center; gap: .75rem; color: var(--muted); font-size: .85rem; }
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
 .lgpd { text-align: center; }
 
 /* Painéis */

@@ -1,0 +1,12 @@
+# Blueprint do Render: New > Blueprint > selecione este repositório
+services:
+  - type: web
+    name: semeando-digital
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/auth/config
+    envVars:
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_GESTOR_EMAILS
+        sync: false

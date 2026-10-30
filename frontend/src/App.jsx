@@ -71,6 +71,12 @@ export default function App() {
     setUsuario(r.usuario)
   }
 
+  const entrarComGoogle = async (credential) => {
+    const r = await api.post('/auth/google', { credential })
+    setToken(r.token)
+    setUsuario(r.usuario)
+  }
+
   const sair = async () => {
     try { await api.post('/auth/logout') } catch { /* sessão já encerrada */ }
     setToken(null)
@@ -81,7 +87,7 @@ export default function App() {
 
   const menu = usuario ? MENUS[usuario.perfil] : []
   return (
-    <AuthContext.Provider value={{ usuario, entrar, sair }}>
+    <AuthContext.Provider value={{ usuario, entrar, entrarComGoogle, sair }}>
       <ConfirmHost />
       <Routes>
         <Route path="/login" element={usuario ? <Navigate to={menu[0].to} /> : <Login />} />

@@ -285,6 +285,7 @@ rota('POST', '/auth/login', null, ({ body }) => {
   tokens.set(token, u.id)
   return { token, usuario: { id: u.id, nome: u.nome, email: u.email, perfil: u.perfil } }
 })
+rota('GET', '/auth/config', null, () => ({ googleClientId: null }))
 rota('GET', '/auth/me', [], ({ u }) => ({ id: u.id, nome: u.nome, email: u.email, perfil: u.perfil }))
 rota('POST', '/auth/logout', [], ({ token }) => { tokens.delete(token) })
 

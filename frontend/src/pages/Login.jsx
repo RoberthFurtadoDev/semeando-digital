@@ -1,6 +1,19 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../App.jsx'
+import { api } from '../api.js'
 import { Alert } from '../components/ui.jsx'
+
+function carregarScriptGoogle() {
+  if (window.google?.accounts?.id) return Promise.resolve()
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script')
+    s.src = 'https://accounts.google.com/gsi/client'
+    s.async = true
+    s.onload = resolve
+    s.onerror = reject
+    document.head.appendChild(s)
+  })
+}
 
 const DEMO = [
   { perfil: 'Gestão', email: 'gestor@exemplo.com', icon: '🏢' },
@@ -10,12 +23,39 @@ const DEMO = [
 ]
 
 export default function Login() {
-  const { entrar } = useAuth()
+  const { entrar, entrarComGoogle } = useAuth()
+  const googleBtn = useRef(null)
+  const [googleAtivo, setGoogleAtivo] = useState(false)
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [verSenha, setVerSenha] = useState(false)
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
+
+  // Login com Google (Google Identity Services): só aparece se o backend tiver GOOGLE_CLIENT_ID
+  useEffect(() => {
+    let cancelado = false
+    api.get('/auth/config').then(({ googleClientId }) => {
+      if (!googleClientId || cancelado) return
+      carregarScriptGoogle().then(() => {
+        if (cancelado || !googleBtn.current) return
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: async ({ credential }) => {
+            setErro('')
+            setEnviando(true)
+            try { await entrarComGoogle(credential) } catch (err) { setErro(err.message) } finally { setEnviando(false) }
+          },
+        })
+        window.google.accounts.id.renderButton(googleBtn.current, {
+          theme: 'outline', size: 'large', text: 'signin_with', shape: 'rectangular', locale: 'pt-BR',
+          width: Math.min(400, googleBtn.current.offsetWidth || 320),
+        })
+        setGoogleAtivo(true)
+      }).catch(() => {})
+    }).catch(() => {})
+    return () => { cancelado = true }
+  }, [entrarComGoogle])
 
   const enviar = async (e, em = email, se = senha) => {
     e?.preventDefault()
@@ -57,6 +97,10 @@ export default function Login() {
             </div>
           </label>
           <button className="btn btn-primary btn-block" disabled={enviando}>{enviando ? 'Entrando...' : 'Entrar'}</button>
+          <div className={googleAtivo ? 'google-area' : 'hidden'}>
+            <div className="divider"><span>ou</span></div>
+            <div ref={googleBtn} className="google-btn" />
+          </div>
 
           <div className="demo">
             <p className="muted small">Acesso rápido para demonstração (senha <strong>123456</strong>):</p>

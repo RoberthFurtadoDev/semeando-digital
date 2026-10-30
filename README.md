@@ -16,9 +16,9 @@ Hoje a escola gerencia matrículas, contratos e cobranças em arquivos de Word a
 ## Stack
 | Camada | Tecnologias |
 |---|---|
-| Backend | Java 21, Spring Boot 3.3 (Web, Data JPA, Validation), H2 (banco em memória), Lombok, BCrypt |
+| Backend | Java 21, Spring Boot 3.3 (Web, Data JPA, Validation), H2 (banco em memória), Lombok, BCrypt, Google API Client (login Google) |
 | Frontend | React 18, React Router 6, Vite 5, CSS puro (layout responsivo) |
-| Build | Maven, npm |
+| Build e deploy | Maven, npm, Docker, Render |
 
 ## Como rodar localmente
 
@@ -61,6 +61,38 @@ Abra **http://localhost:5173** e entre com um dos usuários abaixo (senha `12345
 
 > O banco H2 fica em memória: os dados de exemplo são recriados toda vez que o backend é iniciado.
 
+## Login com conta Google (opcional)
+O botão **Entrar com Google** só aparece quando o backend recebe um Client ID do Google.
+
+1. Acesse o [Google Cloud Console](https://console.cloud.google.com/apis/credentials), crie um projeto e configure a **Tela de consentimento OAuth** (tipo *Externo*; adicione seu e-mail como usuário de teste).
+2. Em **Credenciais → Criar credenciais → ID do cliente OAuth**, escolha *Aplicativo da Web*.
+3. Em **Origens JavaScript autorizadas**, adicione `http://localhost:5173` (e, depois do deploy, a URL do Render, ex.: `https://semeando-digital.onrender.com`).
+4. Inicie o backend com as variáveis de ambiente:
+   ```bash
+   # Linux/Mac
+   export GOOGLE_CLIENT_ID="seu-client-id.apps.googleusercontent.com"
+   export GOOGLE_GESTOR_EMAILS="seu.email@gmail.com"
+   # Windows (PowerShell)
+   $env:GOOGLE_CLIENT_ID="seu-client-id.apps.googleusercontent.com"
+   $env:GOOGLE_GESTOR_EMAILS="seu.email@gmail.com"
+   ```
+
+**Quem pode entrar com Google:** só contas cujo e-mail já está cadastrado no sistema (professores e responsáveis cadastrados pela secretaria), mais os e-mails listados em `GOOGLE_GESTOR_EMAILS`, que entram como Gestor no primeiro acesso. O backend valida o token do Google (assinatura, validade e Client ID) antes de liberar o acesso.
+
+> O Client ID não é segredo (ele aparece no navegador), mas **não use Client Secret**: este fluxo não precisa dele. Nunca versione credenciais no repositório.
+
+## Hospedagem gratuita (Render)
+O `Dockerfile` gera uma imagem única em que o Spring Boot serve a API e a interface React, então basta **um serviço**.
+
+1. Crie uma conta em [render.com](https://render.com) entrando com o GitHub.
+2. Clique em **New → Blueprint** e selecione este repositório (o `render.yaml` já configura o serviço gratuito com Docker).
+3. Preencha `GOOGLE_CLIENT_ID` e `GOOGLE_GESTOR_EMAILS` se quiser o login Google (ou deixe vazio).
+4. Aguarde o build (~5–10 min). A URL fica no formato `https://semeando-digital.onrender.com`.
+
+**Limites do plano gratuito:** o serviço "dorme" após cerca de 15 minutos sem acesso e leva por volta de 1 minuto para acordar; como o banco é em memória, os dados voltam ao estado inicial quando ele reinicia. **Abra o link alguns minutos antes da apresentação.**
+
+Para testar a imagem localmente: `docker build -t semeando-digital . && docker run -p 8080:8080 semeando-digital` e acesse http://localhost:8080.
+
 ## Estrutura
 ```
 semeando-digital/
@@ -76,7 +108,9 @@ semeando-digital/
 │       ├── pages/       telas por perfil
 │       ├── components/  layout e componentes de UI
 │       └── demo/        backend em JS para a versão online
-└── docs/UML.md          diagramas UML
+├── docs/UML.md          diagramas UML
+├── Dockerfile           imagem única (frontend + backend)
+└── render.yaml          configuração de deploy no Render
 ```
 
 ## UML
